@@ -1,0 +1,27 @@
+{
+  "name": "@cleandns/whois-rdap",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cleandns-inc/tool-whois.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cleandns-inc/tool-whois/issues"
+  },
+  "homepage": "https://github.com/cleandns-inc/tool-whois#readme",
+  "devDependencies": {
+    "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "parse-domain": "^8.0.2",
+    "promise-socket": "^7.0.0"
+  }
+}
