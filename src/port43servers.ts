@@ -6,7 +6,7 @@ export const port43parsers: Record<
   (response: string, record: WhoisResponse) => void
 > = {
   rs(response, record) {
-    response = response.replace(/\r/g, '');
+    response = response.replace(/\r/g, "");
 
     let m;
 
@@ -38,6 +38,117 @@ export const port43parsers: Record<
         (m = s.match(/^DNS: (\S+)/m)) &&
           record.nameservers.push(m[1].toLowerCase());
       });
+  },
+
+  nl(response, record) {
+    let m;
+
+    (m = response.match(/^Registrar:\s+(\S[^\n]*)/m)) &&
+      (record.registrar.name = m[1]);
+    (m = response.match(/^Reseller:\s+(\S[^\n]*)/m)) &&
+      (record.reseller = m[1]);
+    (m = response.match(/^Status:[ \t]*(\S[^\n]+)/m)) &&
+      (record.status = [m[1]]);
+    (m = response.match(/^Domain nameservers:[ \t]*\n((?:\S+\n)+)/m)) &&
+      (record.nameservers = m[1].trim().split(/\s+/));
+    (m = response.match(/^Creat\w* Date: (\d\d\d\d-\d\d-\d\d)/m)) &&
+      (record.ts.created = new Date(m[1]));
+    (m = response.match(/^Updat\w* Date: (\d\d\d\d-\d\d-\d\d)/m)) &&
+      (record.ts.updated = new Date(m[1]));
+    (m = response.match(/^Expir\w* Date: (\d\d\d\d-\d\d-\d\d)/m)) &&
+      (record.ts.expires = new Date(m[1]));
+  },
+
+  kr(response, record) {
+    let m;
+
+    (m = response.match(/^Authorized Agency\s*: (.*?)(?=\(http|$)/m)) &&
+      (record.registrar.name = m[1]);
+    // (m = response.match(/^Reseller:\s+(\S[^\n]*)/m)) && (record.reseller = m[1]);
+    (m = response.match(/^Domain Status\s*: [ \t]*(\S[^\n]+)/m)) &&
+      (record.status = m[1].trim().split(/\s+/));
+    (m = response.matchAll(/^Host Name\s*: (\S+)/gm)) &&
+      (record.nameservers = [...m].map((t) => t[1]));
+    (m = response.match(/^Registered Date\s*: (\d\d\d\d). (\d\d). (\d\d)/m)) &&
+      (record.ts.created = new Date(`${m[1]}-${m[2]}-${m[3]}`));
+    (m = response.match(
+      /^Last Updated Date\s*: (\d\d\d\d). (\d\d). (\d\d)/m
+    )) && (record.ts.updated = new Date(`${m[1]}-${m[2]}-${m[3]}`));
+    (m = response.match(/^Expiration Date\s*: (\d\d\d\d). (\d\d). (\d\d)/m)) &&
+      (record.ts.expires = new Date(`${m[1]}-${m[2]}-${m[3]}`));
+  },
+
+  tr(response, record) {
+    let m;
+
+    (m = response.match(/^Organization Name\s*: (.+)/m)) &&
+      (record.registrar.name = m[1]);
+    (m = response.match(/^NIC Handle\s*: (.+)/m)) &&
+      (record.registrar.id = m[1]);
+    // (m = response.match(/^Reseller:\s+(\S[^\n]*)/m)) && (record.reseller = m[1]);
+    (m = response.match(/^Domain Status\s*: (\S[^\n]+)/m)) &&
+      (record.status = m[1].trim().split(/\s+/));
+    (m = response.match(/^\*\* Domain Servers\s*:((?:\n\S+)+)/m)) &&
+      (record.nameservers = m[1].trim().split(/\s+/));
+    (m = response.match(/^Created on.+: (\d\d\d\d)-(\w\w\w)-(\d\d)/m)) &&
+      (record.ts.created = new Date(`${m[2]} ${m[3]}, ${m[1]}`));
+    (m = response.match(/^Expires on.+: (\d\d\d\d)-(\w\w\w)-(\d\d)/m)) &&
+      (record.ts.expires = new Date(`${m[2]} ${m[3]}, ${m[1]}`));
+  },
+
+  be(response, record) {
+    let m;
+
+    (m = response.match(/^Registrar:\s*Name:\s+(.+)/m)) &&
+      (record.registrar.name = m[1]);
+    (m = response.match(/^Status:\s+(.+)/m)) && (record.status = [m[1].trim()]);
+    (m = response.match(/^Nameservers\s*:((?:\n\S+)+)/m)) &&
+      (record.nameservers = m[1].trim().split(/\s+/));
+    (m = response.match(/^Registered:\s+\w\w\w (\w\w\w) (\d\d) (\d\d\d\d)/m)) &&
+      (record.ts.created = new Date(`${m[1]} ${m[2]}, ${m[3]}`));
+  },
+
+  it(response, record) {
+    let m;
+
+    (m = response.match(/^Registrar\s*Organization:\s*(.+)/m)) &&
+      (record.registrar.name = m[1]);
+    (m = response.match(/^Status:\s*(.+)/m)) &&
+      (record.status = m[1].trim().split(/\s+/));
+    (m = response.match(/^Created:\s*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)/m)) &&
+      (record.ts.created = new Date(m[1]));
+    (m = response.match(
+      /^Last Update:\s*(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)/m
+    )) && (record.ts.updated = new Date(m[1]));
+    (m = response.match(/^Expire Date:\s*(\d\d\d\d-\d\d-\d\d)/m)) &&
+      (record.ts.expires = new Date(m[1]));
+    (m = response.match(/^Nameservers((?:\n\S+)+)/m)) &&
+      (record.nameservers = m[1].trim().split(/\s+/));
+  },
+
+  de(response, record) {
+    let m;
+
+    // (m = response.match(/^Registrar:\s*(.+)/m)) && (record.registrar.name = m[1]);
+    (m = response.match(/^Status:\s*(.+)/m)) &&
+      (record.status = m[1].trim().split(/\s+/));
+    (m = response.matchAll(/^Nserver: (\S+)/gm)) &&
+      (record.nameservers = [...m].map((t) => t[1]));
+    // (m = response.match(/^Creation Date:\s*(\d\d\d\d-\d\d-\d\d)/m)) && (record.ts.created = new Date (m[1]));
+    (m = response.match(/^Changed: (\d\d\d\d-\d\d-\d\d\S)/m)) &&
+      (record.ts.updated = new Date(m[1]));
+    // (m = response.match(/^Expiration Date:\s*(\d\d\d\d-\d\d-\d\d)/m)) && (record.ts.expires = new Date (m[1]));
+  },
+
+  eu(response, record) {
+    let m;
+
+    (m = response.match(/^Registrar:\s*Name:\s*(.+)/m)) &&
+      (record.registrar.name = m[1]);
+    (m = response.match(/^Reseller:\s*Organisation:\s*(.+)/m)) &&
+      (record.reseller = m[1]);
+    (m = response.match(/^Name servers:((?:\n\S+)+)/m)) &&
+      (record.nameservers = m[1].trim().split(/\s+/));
   },
 };
 
@@ -515,7 +626,9 @@ export const port43servers: Record<string, any> = {
   be: "whois.dns.be",
   bf: null,
   bg: "whois.register.bg",
-  bh: null,
+  bh: "whois.nic.bh",
+  "com.bh": "whois.nic.bh",
+  "org.bh": "whois.nic.bh",
   bi: "whois1.nic.bi",
   bj: "whois.nic.bj",
   bl: null,
