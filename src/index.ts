@@ -234,7 +234,7 @@ function findTimestamps(values: any[]) {
   for (const [event, field] of eventMap) {
     const date = events.find((ev: any) => ev.eventAction === event);
     if (date?.eventDate) {
-      ts[field] = new Date(date.eventDate);
+      ts[field] = new Date(date.eventDate.replace(/0000Z$/, 'Z'));
     }
   }
 
