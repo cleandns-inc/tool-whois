@@ -155,14 +155,13 @@ export async function whois(domain: string, options: WhoisOptions = { fetch: fet
 
   // registrar
   const { events, ...registrar } = registrars.sort((a: any, b: any) => {
-    // console.warn({ a, b });
     const aDate =
       a.events.find((ev: any) => ev.eventAction === "registration")
         ?.eventDate || 0;
     const bDate =
       b.events.find((ev: any) => ev.eventAction === "registration")
         ?.eventDate || 0;
-    return new Date(bDate).valueOf() - new Date(aDate).valueOf();
+    return new Date(bDate.replace(/\+0000Z$/, 'Z')).valueOf() - new Date(aDate.replace(/\+0000Z$/, 'Z')).valueOf();
   })[0] || { id: 0, name: "" };
   response.registrar = registrar;
 
@@ -234,7 +233,7 @@ function findTimestamps(values: any[]) {
   for (const [event, field] of eventMap) {
     const date = events.find((ev: any) => ev.eventAction === event);
     if (date?.eventDate) {
-      ts[field] = new Date(date.eventDate.replace(/0000Z$/, 'Z'));
+      ts[field] = new Date(date.eventDate.replace(/\+0000Z$/, 'Z'));
     }
   }
 
