@@ -13,5 +13,9 @@ export type WhoisResponse = {
   reseller: string | null;
   status: string[];
   nameservers: string[];
-  ts: Record<WhoisTimestampFields, null | Date>;
+  ts: {
+    created: Date | null;
+    updated: Date | null;
+    expires: Date | null;
+  }
 };
