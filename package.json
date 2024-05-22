@@ -5,7 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "publish": "npm build && npm version patch && npm publish"
   },
   "repository": {
     "type": "git",
