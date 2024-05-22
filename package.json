@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "publish": "npm build && npm version patch && npm publish"
+    "publish": "npm run build && npm version patch && npm publish"
   },
   "repository": {
     "type": "git",
