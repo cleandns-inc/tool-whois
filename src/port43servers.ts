@@ -616,6 +616,7 @@ export const port43servers: Record<string, any> = {
   as: "whois.nic.as",
   "priv.at": "whois.nic.priv.at",
   at: "whois.nic.at",
+  "*.au": "whois.auda.org.au",
   au: "whois.auda.org.au",
   aw: "whois.nic.aw",
   ax: "whois.ax",

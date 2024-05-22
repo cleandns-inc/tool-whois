@@ -11,15 +11,15 @@ export function determinePort43Domain(actor: string) {
 
   if (parsed.type === ParseResultType.Listed) {
     let tld = parsed.topLevelDomains.join(".");
-    if (port43servers[tld]) {
+    if (port43servers[tld] || port43servers[tld.replace(/^[^.]+\./, "*.")]) {
       const domain = parsed.domain + "." + tld;
-      return [domain, tld, port43servers[tld]];
+      return [domain, tld, port43servers[tld] || port43servers[tld.replace(/^[^.]+\./, "*.")]];
     }
 
     tld = parsed.icann.topLevelDomains.join(".");
-    if (port43servers[tld]) {
+    if (port43servers[tld] || port43servers[tld.replace(/^[^.]+\./, "*.")]) {
       const domain = parsed.icann.domain + "." + tld;
-      return [domain, tld, port43servers[tld]];
+      return [domain, tld, port43servers[tld] || port43servers[tld.replace(/^[^.]+\./, "*.")]];
     }
   }
 
@@ -80,8 +80,10 @@ export async function port43(actor: string): Promise<WhoisResponse> {
 
   let m;
 
-  if (port43parsers[tld]) {
-    port43parsers[tld](port43response, response);
+  const parser = port43parsers[tld] || Object.entries(port43parsers).find(([t]) => tld.endsWith('.' + t))?.[1];
+
+  if (parser) {
+      await parser(port43response, response);
   }
 
   !response.registrar.name &&
