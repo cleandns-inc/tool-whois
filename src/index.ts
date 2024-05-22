@@ -10,6 +10,7 @@ const eventMap = new Map<string, WhoisTimestampFields>([
   ["registration", "created"],
   ["last changed", "updated"],
   ["expiration", "expires"],
+  ["expiration date", "expires"],
 ]);
 
 export async function whois(domain: string, options: WhoisOptions = { fetch: fetch }): Promise<WhoisResponse> {
@@ -182,7 +183,7 @@ export async function whois(domain: string, options: WhoisOptions = { fetch: fet
 
   // ts
   response.ts = findTimestamps(
-    thickResponse?.events || thinResponse?.events || []
+    [ ...(thickResponse?.events || []), ...(thinResponse?.events || []) ]
   );
 
   return response;
@@ -231,7 +232,7 @@ function findTimestamps(values: any[]) {
   }
 
   for (const [event, field] of eventMap) {
-    const date = events.find((ev: any) => ev.eventAction === event);
+    const date = events.find((ev: any) => ev.eventAction.toLocaleLowerCase() === event);
     if (date?.eventDate) {
       ts[field] = new Date(date.eventDate.toString().replace(/\+0000Z$/, 'Z'));
     }
@@ -241,5 +242,5 @@ function findTimestamps(values: any[]) {
 }
 
 // await whois(process.argv[2]).then((r) =>
-//   console.log(JSON.stringify(r, null, 2))
+//   console.log(BSON.EJSON.stringify(r, undefined, 2))
 // );
