@@ -114,14 +114,14 @@ export async function port43(actor: string): Promise<WhoisResponse> {
       /^(?:(?:Registry )?Expiry Date):[ \t]*(\S.+)/m
     )) &&
     (response.ts.expires = new Date(m[1]) || null);
-  (m = port43response.match(/^(?:Status|Domain Status|status):.*/gm)) &&
+  !response.status?.length && (m = port43response.match(/^(?:Status|Domain Status|status):.*/gm)) &&
     m.forEach((s) => {
       let m;
       (m = s.match(
         /^(?:Status|Domain Status|status):[ \t]*(?:<a[^>]*>)?(\S+)/m
       )) && response.status.push(normalizeWhoisStatus(m[1]));
     });
-  (m = port43response.match(
+  !response.nameservers?.length && (m = port43response.match(
     /^(?:Name Server|ns_name_\d+|namserver|nserver):.*/gm
   )) &&
     m.forEach((s) => {

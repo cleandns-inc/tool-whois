@@ -135,7 +135,7 @@ export const port43parsers: Record<
     (m = response.matchAll(/^Nserver: (\S+)/gm)) &&
       (record.nameservers = [...m].map((t) => t[1]));
     // (m = response.match(/^Creation Date:\s*(\d\d\d\d-\d\d-\d\d)/m)) && (record.ts.created = new Date (m[1]));
-    (m = response.match(/^Changed: (\d\d\d\d-\d\d-\d\d\S)/m)) &&
+    (m = response.match(/^Changed: (\d\d\d\d-\d\d-\d\d(?:T\d\d:\d\d:\d\d(?:[+-]\d\d:\d\d)?)?)/m)) &&
       (record.ts.updated = new Date(m[1]));
     // (m = response.match(/^Expiration Date:\s*(\d\d\d\d-\d\d-\d\d)/m)) && (record.ts.expires = new Date (m[1]));
   },
