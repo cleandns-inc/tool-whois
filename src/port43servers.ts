@@ -150,6 +150,18 @@ export const port43parsers: Record<
     (m = response.match(/^Name servers:((?:\n\S+)+)/m)) &&
       (record.nameservers = m[1].trim().split(/\s+/));
   },
+
+  mk(response, record) {
+    let m;
+
+    (m = response.match(/^registered:\s+(\d\d)\.(\d\d)\.(\d\d\d\d) (\d\d:\d\d:\d\d)/m)) &&
+      (record.ts.created = new Date (`${m[3]}-${m[2]}-${m[1]}T${m[4]}Z`));
+    (m = response.match(/^changed:\s+(\d\d)\.(\d\d)\.(\d\d\d\d) (\d\d:\d\d:\d\d)/m)) &&
+      (record.ts.updated = new Date (`${m[3]}-${m[2]}-${m[1]}T${m[4]}Z`));
+    (m = response.match(/^expire:\s+(\d\d)\.(\d\d)\.(\d\d\d\d)(?: (\d\d:\d\d:\d\d))?/m)) &&
+      (record.ts.expires = new Date (`${m[3]}-${m[2]}-${m[1]}T${m[4] || '00:00:00'}Z`));
+  }
+
 };
 
 export const port43servers: Record<string, any> = {

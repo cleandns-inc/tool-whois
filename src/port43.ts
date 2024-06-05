@@ -127,9 +127,13 @@ export async function port43(actor: string): Promise<WhoisResponse> {
     m.forEach((s) => {
       let m;
       (m = s.match(
-        /^(?:Name Server|ns_name_\d+|namserver|nserver):[ \t]*(.*)/m
+        /^(?:Name Server|ns_name_\d+|namserver|nserver):[ \t]*(\S+)/m
       )) && response.nameservers.push(m[1].toLowerCase());
     });
+
+  if (response.ts.created && !response.ts.created.valueOf()) response.ts.created = null;
+  if (response.ts.updated && !response.ts.updated.valueOf()) response.ts.updated = null;
+  if (response.ts.expires && !response.ts.expires.valueOf()) response.ts.expires = null;
 
   if (response.registrar.id === 0 && response.registrar.name !== "") {
     for (const [id, { name }] of ianaToRegistrarCache.entries()) {
