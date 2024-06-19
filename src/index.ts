@@ -232,7 +232,7 @@ function findTimestamps(values: any[]) {
   }
 
   for (const [event, field] of eventMap) {
-    const date = events.find((ev: any) => ev.eventAction.toLocaleLowerCase() === event);
+    const date = events.find((ev: any) => ev?.eventAction?.toLocaleLowerCase() === event);
     if (date?.eventDate) {
       ts[field] = new Date(date.eventDate.toString().replace(/\+0000Z$/, 'Z'));
     }
