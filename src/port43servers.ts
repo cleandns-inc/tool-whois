@@ -790,7 +790,7 @@ export const port43servers: Record<string, any> = {
   mv: null,
   mw: "whois.nic.mw",
   mx: "whois.mx",
-  my: "whois.domainregistry.my",
+  my: "whois.mynic.my",
   mz: "whois.nic.mz",
   na: "whois.na-nic.com.na",
   nc: "whois.nc",
