@@ -1,8 +1,9 @@
 import { ParseResultType, parseDomain } from "parse-domain";
 
 type TldToRdap = [string[], string[]];
-const tldCache = new Map<string, string>([]);
-const tldCachePresets = [
+const tldCache = new Map<string, string | null>([]);
+const tldCachePresets: [string, string | null][] = [
+  ["it.com", null],
   ["br.com", "https://rdap.centralnic.com/br.com"],
   ["cn.com", "https://rdap.centralnic.com/cn.com"],
   ["de.com", "https://rdap.centralnic.com/de.com"],
@@ -27,20 +28,22 @@ const tldCachePresets = [
   ["za.com", "https://rdap.centralnic.com/za.com"],
 ];
 
-export async function tldToRdap(domain: string): Promise<[ string, string | null ]> {
+export async function tldToRdap(
+  domain: string
+): Promise<[string, string | null]> {
   if (tldCache.size === 0) {
     for (const [tld, url] of tldCachePresets) {
       tldCache.set(tld, url);
     }
 
     // console.warn(`fetching tld-to-rdap`);
-    const response: { services: TldToRdap[]; } = await fetch(
+    const response: { services: TldToRdap[] } = await fetch(
       `https://data.iana.org/rdap/dns.json`
     ).then((r) => r.json() as any);
 
     for (const [tlds, urls] of response.services) {
       for (const tld of tlds) {
-        tldCache.set(tld, urls[0].replace(/\/$/, ''));
+        tldCache.set(tld, urls[0].replace(/\/$/, ""));
       }
     }
   }
@@ -50,11 +53,11 @@ export async function tldToRdap(domain: string): Promise<[ string, string | null
   if (parsed.type === ParseResultType.Listed) {
     let tld = parsed.topLevelDomains.join(".");
     if (tldCache.has(tld)) {
-      return [ parsed.domain + '.' + tld, tldCache.get(tld)! ];
+      return [parsed.domain + "." + tld, tldCache.get(tld)!];
     }
     tld = parsed.icann.topLevelDomains.join(".");
     if (tldCache.has(tld)) {
-      return [ parsed.icann.domain + '.' + tld, tldCache.get(tld)! ];
+      return [parsed.icann.domain + "." + tld, tldCache.get(tld)!];
     }
 
     // const tlds = [
@@ -69,5 +72,5 @@ export async function tldToRdap(domain: string): Promise<[ string, string | null
     // }
   }
 
-  return [ domain, null ];
+  return [domain, null];
 }

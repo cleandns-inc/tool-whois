@@ -187,6 +187,11 @@ export const port43servers: Record<string, any> = {
   "uy.com": "whois.centralnic.net",
   "web.com": "whois.centralnic.net",
   "za.com": "whois.centralnic.net",
+
+  "it.com": {
+    url: `https://engine.itcomdomains.com/api/v1/domain/%%domain%%/whois_info`,
+  },    
+
   com: {
     host: "whois.verisign-grs.com",
     query: "DOMAIN $addr\r\n",

@@ -6,6 +6,7 @@ export type WhoisOptions = Partial<{
 
 export type WhoisResponse = {
   found: boolean;
+  server?: string;
   registrar: {
     id: string | number;
     name: string | null;

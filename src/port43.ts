@@ -29,6 +29,7 @@ export function determinePort43Domain(actor: string) {
 export async function port43(actor: string): Promise<WhoisResponse> {
   const [domain, tld, whoisServer] = determinePort43Domain(actor);
   const opts = whoisServer;
+  const isWwww = opts?.url;
   const server = opts?.host || opts || null;
   const query = opts?.query
     ? opts.query.replace("$addr", domain)
@@ -53,14 +54,21 @@ export async function port43(actor: string): Promise<WhoisResponse> {
   let port43response = "";
 
   try {
-    const promiseSocket = new PromiseSocket(new Socket());
-    promiseSocket.setTimeout(5 * 1000);
-    await promiseSocket.connect(port, server);
-    await promiseSocket.write(query);
-    port43response = (await promiseSocket.readAll())!
-      .toString()
-      .replace(/^[ \t]+/gm, "");
-    await promiseSocket.end();
+    if (isWwww) {
+      port43response = (await fetch(opts.url.replace('%%domain%%', domain)).then(r => r.text())).toString().replace(/^[ \t]+/gm, "");
+      response.server = opts.url.match('//(.*?)/')?.[1];
+    }
+    else {
+      response.server = server;
+      const promiseSocket = new PromiseSocket(new Socket());
+      promiseSocket.setTimeout(5 * 1000);
+      await promiseSocket.connect(port, server);
+      await promiseSocket.write(query);
+      port43response = (await promiseSocket.readAll())!
+        .toString()
+        .replace(/^[ \t]+/gm, "");
+      await promiseSocket.end();
+    }
   } catch (error) {
     response.found = false;
   }

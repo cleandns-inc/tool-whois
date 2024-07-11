@@ -14,13 +14,15 @@ const eventMap = new Map<string, WhoisTimestampFields>([
 ]);
 
 export async function whois(
-  domain: string,
+  origDomain: string,
   options: WhoisOptions = { fetch: fetch }
 ): Promise<WhoisResponse> {
   const fetch = options.fetch!;
 
+  let domain = origDomain;
   let url: string | null = null;
-  [domain, url] = await tldToRdap(domain);
+
+  [domain, url] = await tldToRdap(origDomain);
 
   const response: WhoisResponse = {
     found: false,
