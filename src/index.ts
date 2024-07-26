@@ -117,11 +117,12 @@ export async function whois(
           pubIds.find((id: any) => id.type === "IANA Registrar ID")?.identifier;
 
         if (reg) {
+          console.log(ent.vcardArray);
           const id = reg;
           const name =
-            parseInt(id) == id
-              ? (await ianaIdToRegistrar(parseInt(id)))?.name
-              : findInObject(
+            (parseInt(id) == id
+              && (await ianaIdToRegistrar(parseInt(id)))?.name)
+              || findInObject(
                   ent.vcardArray,
                   (el: any) =>
                     Array.isArray(el) && (el[0] === "fn" || el[0] === "org"),
@@ -153,9 +154,9 @@ export async function whois(
       ) {
         const id = ent.handle;
         const name =
-          parseInt(id) == id
-            ? (await ianaIdToRegistrar(parseInt(id)))?.name
-            : findInObject(
+          (parseInt(id) == id
+            && (await ianaIdToRegistrar(parseInt(id)))?.name)
+            || findInObject(
                 ent.vcardArray,
                 (el: any) =>
                   Array.isArray(el) && (el[0] === "fn" || el[0] === "org"),
