@@ -117,7 +117,7 @@ export async function whois(
           pubIds.find((id: any) => id.type === "IANA Registrar ID")?.identifier;
 
         if (reg) {
-          console.log(ent.vcardArray);
+          // console.log(ent.vcardArray);
           const id = reg;
           const name =
             (parseInt(id) == id
