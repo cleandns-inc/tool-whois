@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/cleandns-inc/tool-whois#readme",
   "devDependencies": {
+    "@types/node": "^22.0.2",
     "typescript": "^5.4.3"
   },
   "dependencies": {
