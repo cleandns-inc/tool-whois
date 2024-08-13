@@ -15,7 +15,7 @@ const eventMap = new Map<string, WhoisTimestampFields>([
 
 export async function whois(
   origDomain: string,
-  options: WhoisOptions = { fetch: fetch }
+  options: WhoisOptions = { fetch: fetch, thinOnly: false }
 ): Promise<WhoisResponse> {
   const fetch = options.fetch!;
 
@@ -67,7 +67,7 @@ export async function whois(
 
   let thickResponse: any = null;
 
-  if (thickRdap) {
+  if (!options.thinOnly && thickRdap) {
     // console.log(`fetching thick RDAP: ${thickRdap}`);
     thickResponse = await fetch(thickRdap)
       .then((r) => r.json() as any)
