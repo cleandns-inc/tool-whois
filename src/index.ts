@@ -17,7 +17,7 @@ export async function whois(
   origDomain: string,
   options: WhoisOptions = { fetch: fetch, thinOnly: false }
 ): Promise<WhoisResponse> {
-  const fetch = options.fetch!;
+  const _fetch = options.fetch || fetch;
 
   let domain = origDomain;
   let url: string | null = null;
@@ -43,7 +43,7 @@ export async function whois(
   const thinRdap = `${url}/domain/${domain}`;
   // console.log(`fetching thin RDAP: ${thinRdap}`);
 
-  let thinResponse = await fetch(thinRdap)
+  let thinResponse = await _fetch(thinRdap)
     .then((r) => r.json() as any)
     .catch(() => null);
   if (thinResponse && !thinResponse.errorCode) {
@@ -69,7 +69,7 @@ export async function whois(
 
   if (!options.thinOnly && thickRdap) {
     // console.log(`fetching thick RDAP: ${thickRdap}`);
-    thickResponse = await fetch(thickRdap)
+    thickResponse = await _fetch(thickRdap)
       .then((r) => r.json() as any)
       .catch(() => null);
     if (thickResponse && !thickResponse.errorCode && !thickResponse.error) {
