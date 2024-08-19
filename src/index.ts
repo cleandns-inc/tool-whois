@@ -29,6 +29,7 @@ export async function whois(
     registrar: { id: 0, name: null },
     reseller: null,
     status: [],
+    statusDelta: [],
     nameservers: [],
     ts: { created: null, updated: null, expires: null },
   };
@@ -229,10 +230,18 @@ export async function whois(
   response.reseller = reseller;
 
   // status
-  response.status = findStatus(
-    thickResponse?.status || thinResponse?.status || [],
-    domain
-  );
+  const statusThin = findStatus(thinResponse?.status || [], domain);
+  const statusThick = findStatus(thickResponse?.status || [], domain);
+  response.status = [...new Set ([...statusThin, ...statusThick])];
+
+  response.statusDelta = [];
+  for (const status of response.status) {
+    const thin = statusThin.includes(status) || statusThin.includes(status.replace(/^client/, "server")) || statusThin.includes(status.replace(/^server/, "client"));
+    const thick = statusThick.includes(status) || statusThick.includes(status.replace(/^client/, "server")) || statusThick.includes(status.replace(/^server/, "client"));
+    if (thin !== thick) {
+      response.statusDelta.push({ status, thin, thick });
+    }
+  }
 
   // nameservers
   response.nameservers = findNameservers(
@@ -302,6 +311,6 @@ function findTimestamps(values: any[]) {
   return ts;
 }
 
-// await whois(process.argv[2]).then((r) =>
-//   console.log(JSON.stringify(r, undefined, 2))
-// );
+await whois(process.argv[2]).then((r) =>
+  console.log(JSON.stringify(r, undefined, 2))
+);

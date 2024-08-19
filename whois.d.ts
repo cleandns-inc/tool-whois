@@ -14,10 +14,11 @@ export type WhoisResponse = {
   };
   reseller: string | null;
   status: string[];
+  statusDelta?: { status: string; thin: boolean; thick: boolean }[];
   nameservers: string[];
   ts: {
     created: Date | null;
     updated: Date | null;
     expires: Date | null;
-  }
+  };
 };
