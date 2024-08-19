@@ -311,6 +311,6 @@ function findTimestamps(values: any[]) {
   return ts;
 }
 
-await whois(process.argv[2]).then((r) =>
-  console.log(JSON.stringify(r, undefined, 2))
-);
+// await whois(process.argv[2]).then((r) =>
+//   console.log(JSON.stringify(r, undefined, 2))
+// );
