@@ -34,7 +34,7 @@ const statusMap: Record<string,string> = {
   'deleteprohibited': 'client delete prohibited',
   'renewprohibited': 'client renew prohibited',
   'transferprohibited': 'client transfer prohibited',
-  'updatedprohibited': 'client update prohibited',
+  'updateprohibited': 'client update prohibited',
 };
 
 export function normalizeWhoisStatus(status: string) {
