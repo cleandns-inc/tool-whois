@@ -79,7 +79,7 @@ export async function port43(actor: string): Promise<WhoisResponse> {
 
   if (
     port43response.match(
-      /^%*\s+(NOT FOUND|No match|NO OBJECT FOUND|No entries found|No Data Found|No information available|Status: free)\b/im
+      /^%*\s+(NOT FOUND|No match|NO OBJECT FOUND|No entries found|No Data Found|Domain is available for registration|No information available|Status: free)\b/im
     )
   ) {
     response.found = false;

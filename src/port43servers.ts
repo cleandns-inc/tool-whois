@@ -78,6 +78,23 @@ export const port43parsers: Record<
       (record.ts.expires = new Date(`${m[1]}-${m[2]}-${m[3]}`));
   },
 
+  lk(response, record) {
+    const json = JSON.parse(response);
+    let m;
+    // const response = {
+    //   "ExpireDate" : "Expiration Date - Saturday, 30th November, 2024",
+    //   "Message" : "Domain is REGISTERED   for - Global Business Process Outsourcing (Pvt) Ltd - Category - Budget ",
+    //   "Required" : {
+    //      "Available" : 0,
+    //      "DomainName" : "globalbpo",
+    //      "DomainTypeName" : "com.lk",
+    //   }
+    // }
+    (m = json.ExpireDate.match(/, (\d+)(?:st|nd|rd|th) (\w+), (\d+)/)) &&
+      (record.ts.expires = new Date(`${m[2]} ${m[1]}, ${m[3]}`));
+    (record.found = !json.Required?.Available);
+  },
+
   tr(response, record) {
     let m;
 
@@ -155,11 +172,11 @@ export const port43parsers: Record<
     let m;
 
     (m = response.match(/^registered:\s+(\d\d)\.(\d\d)\.(\d\d\d\d) (\d\d:\d\d:\d\d)/m)) &&
-      (record.ts.created = new Date (`${m[3]}-${m[2]}-${m[1]}T${m[4]}Z`));
+      (record.ts.created = new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}Z`));
     (m = response.match(/^changed:\s+(\d\d)\.(\d\d)\.(\d\d\d\d) (\d\d:\d\d:\d\d)/m)) &&
-      (record.ts.updated = new Date (`${m[3]}-${m[2]}-${m[1]}T${m[4]}Z`));
+      (record.ts.updated = new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}Z`));
     (m = response.match(/^expire:\s+(\d\d)\.(\d\d)\.(\d\d\d\d)(?: (\d\d:\d\d:\d\d))?/m)) &&
-      (record.ts.expires = new Date (`${m[3]}-${m[2]}-${m[1]}T${m[4] || '00:00:00'}Z`));
+      (record.ts.expires = new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4] || '00:00:00'}Z`));
   }
 
 };
@@ -188,9 +205,17 @@ export const port43servers: Record<string, any> = {
   "web.com": "whois.centralnic.net",
   "za.com": "whois.centralnic.net",
 
+  lk: {
+    url: `https://www.domains.lk/wp-content/themes/bridge-child/getDomainData.php?domainname=%%domain%%`,
+  },
+
+  "*.lk": {
+    url: `https://www.domains.lk/wp-content/themes/bridge-child/getDomainData.php?domainname=%%domain%%`,
+  },
+
   "it.com": {
     url: `https://engine.itcomdomains.com/api/v1/domain/%%domain%%/whois_info`,
-  },    
+  },
 
   com: {
     host: "whois.verisign-grs.com",
@@ -767,7 +792,6 @@ export const port43servers: Record<string, any> = {
   lb: null,
   lc: "whois.afilias-grs.info",
   li: "whois.nic.li",
-  lk: "whois.nic.lk",
   lr: null,
   ls: "whois.nic.ls",
   lt: "whois.domreg.lt",
