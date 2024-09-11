@@ -248,7 +248,7 @@ export const port43servers: Record<string, any> = {
   coop: "whois.nic.coop",
   info: "whois.afilias.net",
   jobs: "jobswhois.verisign-grs.com",
-  mobi: "whois.dotmobiregistry.net",
+  mobi: "whois.nic.mobi",
   museum: "whois.museum",
   name: "whois.nic.name",
   post: "whois.dotpostregistry.net",
