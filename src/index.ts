@@ -210,13 +210,13 @@ export async function whois(
   // registrar
   const { events, ...registrar } = registrars.sort((a: any, b: any) => {
     const aDate = (
-      a.events.find((ev: any) => ev.eventAction === "registration")
+      (a.events || []).find((ev: any) => ev.eventAction === "registration")
         ?.eventDate || 0
     )
       .toString()
       .replace(/\+0000Z$/, "Z");
     const bDate = (
-      b.events.find((ev: any) => ev.eventAction === "registration")
+      (b.events || []).find((ev: any) => ev.eventAction === "registration")
         ?.eventDate || 0
     )
       .toString()
