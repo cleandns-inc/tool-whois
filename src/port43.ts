@@ -96,7 +96,7 @@ export async function port43(actor: string): Promise<WhoisResponse> {
 
   !response.registrar.name &&
     (m = port43response.match(
-      /^(?:Registrar(?: Name)?|registrar_name|registrar):[ \t]*(\S.+)/m
+      /^(?:(?:Sponsoring )?Registrar(?: Name)?|registrar_name|registrar):[ \t]*(\S.+)/m
     )) &&
     (response.registrar.name = m[1]);
   !response.reseller &&
