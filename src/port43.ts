@@ -66,16 +66,20 @@ export async function port43(actor: string): Promise<WhoisResponse> {
       await promiseSocket.write(query);
       port43response = (await promiseSocket.readAll())!
         .toString()
+        .replace(/\r/g, "")
         .replace(/^[ \t]+/gm, "");
       await promiseSocket.end();
     }
-  } catch (error) {
+  } catch (error: any) {
+    console.warn(port, server, query);
     response.found = false;
   }
 
   if (!response.found) {
     return response;
   }
+
+  console.log(port43response);
 
   if (
     port43response.match(
@@ -91,52 +95,118 @@ export async function port43(actor: string): Promise<WhoisResponse> {
   const parser = port43parsers[tld] || Object.entries(port43parsers).find(([t]) => tld.endsWith('.' + t))?.[1];
 
   if (parser) {
-      await parser(port43response, response);
+    await parser(port43response, response);
   }
 
   !response.registrar.name &&
     (m = port43response.match(
-      /^(?:(?:Sponsoring )?Registrar(?: Name)?|registrar_name|registrar):[ \t]*(\S.+)/m
+      /^registrar(?:-name)?\.*:[ \t]*(\S.+)\s*\(\s*http.*/m
     )) &&
-    (response.registrar.name = m[1]);
+    (response.registrar.name = m[1].trim());
+  !response.registrar.name &&
+    (m = port43response.match(
+      /^(?:(?:Sponsoring )?Registrar(?: Name)?|registrar\Wname|registrar|Registration service provider)\.*:[ \t]*(\S.+)/im
+    )) &&
+    (response.registrar.name = m[1].trim());
+  !response.registrar.name &&
+    (m = port43response.match(
+      /^REGISTRAR:[ \t]*\n(\S.+)/m
+    )) &&
+    (response.registrar.name = m[1].trim());
+  !response.registrar.name &&
+    (m = port43response.match(
+      /^\[Registrar\]\s*(?:[^\n:]+:.*\n)*Name:[ \t]*(\S.+)/m
+    )) &&
+    (response.registrar.name = m[1].trim());
+
+  !response.registrar.id &&
+    (m = port43response.match(/^Registrar IANA ID:[ \t]*(\d+)/im)) &&
+    (response.registrar.id = parseInt(m[1] || "0"));
+
   !response.reseller &&
     (m = port43response.match(
-      /^(?:Reseller(?: Name)?|reseller_name|reseller):[ \t]*(\S.+)/m
+      /^(?:Reseller(?: Name)?|reseller_name|reseller):[ \t]*(\S.+)/im
     )) &&
-    (response.reseller = m[1]);
-  !response.registrar.id &&
-    (m = port43response.match(/^Registrar IANA ID:[ \t]*(\d+)/m)) &&
-    (response.registrar.id = parseInt(m[1] || "0"));
+    (response.reseller = m[1].trim());
+
   !response.ts.updated &&
     (m = port43response.match(
-      /^(?:Last Modified|Updated Date|domain_datelastmodified|last-update):[ \t]*(\S.+)/m
+      /^(?:Last Modified|Updated Date|Last updated on|domain_datelastmodified|last-update|modified|last modified)\.*:[ \t]*(\S.+)/im
     )) &&
-    (response.ts.updated = new Date(m[1]) || null);
+    (response.ts.updated = new Date(reformatDate(m[1])) || null);
+  !response.ts.updated &&
+    (m = port43response.match(
+      /^\[Last Updated?\][ \t]+(\S.+)/im
+    )) &&
+    (response.ts.updated = new Date(reformatDate(m[1])) || null);
+
   !response.ts.created &&
     (m = port43response.match(
-      /^(?:Creation Date|domain_dateregistered|created):[ \t]*(\S.+)/m
+      /^(?:Creation Date|domain_dateregistered|Registered|created|Created date|Domain created)\.*:[ \t]*(\S.+)/im
     )) &&
-    (response.ts.created = new Date(m[1]) || null);
+    (response.ts.created = new Date(reformatDate(m[1])) || null);
+  !response.ts.created &&
+    (m = port43response.match(
+      /^(?:Record created on |\[(?:Created on|Registered Date)\][ \t]+)(\S.+)/im
+    )) &&
+    (response.ts.created = new Date(reformatDate(m[1])) || null);
+
   !response.ts.expires &&
     (m = port43response.match(
-      /^(?:(?:Registry )?Expiry Date):[ \t]*(\S.+)/m
+      /^(?:(?:Registry )?Expiry Date|Expiration date|expires?|Exp date|paid-till|free-date|renewal date)\.*:[ \t]*(\S.+)/im
     )) &&
-    (response.ts.expires = new Date(m[1]) || null);
-  !response.status?.length && (m = port43response.match(/^(?:Status|Domain Status|status):.*/gm)) &&
+    (response.ts.expires = new Date(reformatDate(m[1])) || null);
+  !response.ts.expires &&
+    (m = port43response.match(
+      /^(?:Record expires on |\[Expires on\][ \t]+)(\S.+)/im
+    )) &&
+    (response.ts.expires = new Date(reformatDate(m[1])) || null);
+
+  !response.status?.length && (m = port43response.match(/^(?:Status|Domain [Ss]tatus|status)\.*:.*/gm)) &&
     m.forEach((s) => {
       let m;
       (m = s.match(
-        /^(?:Status|Domain Status|status):[ \t]*(?:<a[^>]*>)?(\S+)/m
-      )) && response.status.push(normalizeWhoisStatus(m[1]));
+        /^(?:Status|Domain [Ss]tatus|status)\.*:[ \t]*(?:<a[^>]*>)?(\S+)/m
+      )) && m[1].split(/\s*,\s*/).map((status) => response.status.push(normalizeWhoisStatus(status)));
     });
+  !response.status?.length && (m = port43response.match(/^Domain status : ((?:\S+ -\s*)+)/m)) &&
+    m[1].match(/\w+/g)?.map((status) => response.status.push(normalizeWhoisStatus(status)));
+
   !response.nameservers?.length && (m = port43response.match(
-    /^(?:Name Server|ns_name_\d+|namserver|nserver):.*/gm
+    /^(?:Hostname|DNS|Name Server|ns_name_\d+|name?server|nserver|(?:primary|secondary) server)\.*:.*/gmi
   )) &&
     m.forEach((s) => {
       let m;
       (m = s.match(
-        /^(?:Name Server|ns_name_\d+|namserver|nserver):[ \t]*(\S+)/m
+        /^(?:Hostname|DNS|Name Server|ns_name_\d+|name?server|nserver|(?:primary|secondary) server)\.*:[ \t]*(\S+)/mi
       )) && response.nameservers.push(m[1].toLowerCase());
+    });
+  !response.nameservers?.length && (m = port43response.match(
+    /^(?:\w. )?\[Name Server\][ \t]*\S+/gmi
+  )) &&
+    m.forEach((s) => {
+      let m;
+      (m = s.match(
+        /\[Name Server\][ \t]*(\S+)/mi
+      )) && response.nameservers.push(m[1].toLowerCase());
+    });
+  !response.nameservers?.length && (m = port43response.match(
+    /^DNS servers\s*((?:Name\.+:.+\n)+)/mi
+  )) &&
+    m[1].match(/[^.\s]+(?:\.[^.\s]+)+/g)?.forEach((s) => {
+      response.nameservers.push(s.toLowerCase());
+    });
+  !response.nameservers?.length && (m = port43response.match(
+    /^Domain servers in listed order:\s*((?:\S+[ \t]*\n)+)/mi
+  )) &&
+    m[1].trim().split(/\s+/).forEach((s) => {
+      response.nameservers.push(s.toLowerCase());
+    });
+  !response.nameservers?.length && (m = port43response.match(
+    /^nameservers:[ \t]*(\S+(?:[ \t]*\n\S+)+)/m
+  )) &&
+    m[1].match(/[^.\s]+(?:\.[^.\s]+)+/g)?.forEach((s) => {
+      response.nameservers.push(s.toLowerCase());
     });
 
   if (response.ts.created && !response.ts.created.valueOf()) response.ts.created = null;
@@ -175,4 +245,29 @@ export async function port43(actor: string): Promise<WhoisResponse> {
   }
 
   return response;
+}
+
+
+function reformatDate(date: string) {
+  if (date.match(/^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d \(UTC[+-]\d+\)$/)) {
+    return date;
+  }
+  if (date.match(/CLST$/)) {
+    return date.replace(/CLST$/, "-0400");
+  }
+  if (date.match(/CLT$/)) {
+    return date.replace(/CLT$/, "-0300");
+  }
+
+  const dmy = date.match(/^(\d\d)\W(\d\d)\W(\d\d\d\d)(\b.*)$/);
+  if (dmy) {
+    return `${dmy[3]}-${dmy[2]}-${dmy[1]}${dmy[4]}`;
+  }
+
+  const ymd = date.match(/^(\d\d\d\d)(\d\d)(\d\d)\b/);
+  if (ymd) {
+    return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+  }
+
+  return date;
 }

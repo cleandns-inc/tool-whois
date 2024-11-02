@@ -109,27 +109,25 @@ export async function whois(
           );
         }
         const reg =
-          pubIds.find((id: any) => id.type === "PANDI Registrar ID")
-            ?.Identifier ||
-          pubIds.find((id: any) => id.type === "PANDI Registrar ID")
-            ?.identifier ||
-          pubIds.find((id: any) => id.type === "IANA Registrar ID")
-            ?.Identifier ||
-          pubIds.find((id: any) => id.type === "IANA Registrar ID")?.identifier;
+          pubIds.find((id: any) => id.type === "PANDI Registrar ID")?.Identifier ||
+          pubIds.find((id: any) => id.type === "PANDI Registrar ID")?.identifier ||
+          pubIds.find((id: any) => id.type === "IANA Registrar ID")?.Identifier ||
+          pubIds.find((id: any) => id.type === "IANA Registrar ID")?.identifier ||
+          pubIds.find((id: any) => id.type === "IANA Registrar ID");
 
         if (reg) {
           // console.log(ent.vcardArray);
-          const id = reg;
+          const id = typeof reg === 'object' ? 0 : reg;
           const name =
             (parseInt(id) == id
               && (await ianaIdToRegistrar(parseInt(id)))?.name)
-              || findInObject(
-                  ent.vcardArray,
-                  (el: any) =>
-                    Array.isArray(el) && (el[0] === "fn" || el[0] === "org"),
-                  (el: any[]) => el[3],
-                  reg
-                );
+            || findInObject(
+              ent.vcardArray,
+              (el: any) =>
+                Array.isArray(el) && (el[0] === "fn" || el[0] === "org"),
+              (el: any[]) => el[3],
+              reg
+            );
           const email =
             [ent, ...(ent.entities || [])]
               .filter((e) => e?.vcardArray)
@@ -147,6 +145,45 @@ export async function whois(
             ent.events || response.events || ent.enents || response.enents;
           registrars.push({ id, name, email, events });
         }
+        // handles .ca
+        else if (ent.vcardArray?.[1]?.[3]?.[3] === 'registrar') {
+          const email =
+          [ent, ...(ent.entities || [])]
+            .filter((e) => e?.vcardArray)
+            .map((e) =>
+              findInObject(
+                e.vcardArray,
+                (el: any) => Array.isArray(el) && el[0] === "email",
+                (el: any[]) => el[3],
+                ""
+              )
+            )
+            .filter(Boolean)?.[0] || "";
+
+          registrars.push({ id: 0, name: ent.vcardArray[1][1][3], email, events: ent.events || response.events || ent.enents || response.enents });
+        }
+        // handles .si
+        else if (ent.vcardArray?.[1].find((el: string[]) => el[0] === 'fn')) {
+          const email =
+          [ent, ...(ent.entities || [])]
+            .filter((e) => e?.vcardArray)
+            .map((e) =>
+              findInObject(
+                e.vcardArray,
+                (el: any) => Array.isArray(el) && el[0] === "email",
+                (el: any[]) => el[3],
+                ""
+              )
+            )
+            .filter(Boolean)?.[0] || "";
+
+          registrars.push({ id: 0, name: ent.vcardArray[1].find((el: string[]) => el[0] === 'fn')[3], email, events: ent.events || response.events || ent.enents || response.enents });
+        }
+        // handles .ar
+        else if (ent.handle) {
+          registrars.push({ id: 0, name: ent.handle, email: '', events: ent.events || response.events || ent.enents || response.enents });
+        }
+
       }
 
       if (
@@ -157,13 +194,13 @@ export async function whois(
         const name =
           (parseInt(id) == id
             && (await ianaIdToRegistrar(parseInt(id)))?.name)
-            || findInObject(
-                ent.vcardArray,
-                (el: any) =>
-                  Array.isArray(el) && (el[0] === "fn" || el[0] === "org"),
-                (el: any[]) => el[3],
-                id
-              );
+          || findInObject(
+            ent.vcardArray,
+            (el: any) =>
+              Array.isArray(el) && (el[0] === "fn" || el[0] === "org"),
+            (el: any[]) => el[3],
+            id
+          );
         const email =
           [ent, ...(ent.entities || [])]
             .filter((e) => e?.vcardArray)
@@ -232,7 +269,7 @@ export async function whois(
   // status
   const statusThin = findStatus(thinResponse?.status || [], domain);
   const statusThick = findStatus(thickResponse?.status || [], domain);
-  response.status = [...new Set ([...statusThin, ...statusThick])];
+  response.status = [...new Set([...statusThin, ...statusThick])];
 
   response.statusDelta = [];
   for (const status of response.status) {
@@ -263,8 +300,8 @@ function findStatus(statuses: string | string[], domain: string): string[] {
   return (Array.isArray(statuses)
     ? statuses
     : statuses && typeof statuses === "object"
-    ? Object.keys(statuses)
-    : (statuses || "").trim().split(/\s*,\s*/)
+      ? Object.keys(statuses)
+      : (statuses || "").trim().split(/\s*,\s*/)
   ).map((status) => normalizeWhoisStatus(status));
 }
 
