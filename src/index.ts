@@ -87,7 +87,7 @@ export async function whois(
   const registrars: any[] = [];
   const resellers: any[] = [];
 
-  async function extractRegistrarsAndResellers(response: any, url: string) {
+  async function extractRegistrarsAndResellers(response: any, url: string, isThick?: boolean) {
     for (const ent of [
       ...(response.entities || []),
       response.entity ? { events: response.events, ...response.entity } : null,
@@ -109,11 +109,12 @@ export async function whois(
           );
         }
         const reg =
-          pubIds.find((id: any) => id.type === "PANDI Registrar ID")?.Identifier ||
-          pubIds.find((id: any) => id.type === "PANDI Registrar ID")?.identifier ||
-          pubIds.find((id: any) => id.type === "IANA Registrar ID")?.Identifier ||
-          pubIds.find((id: any) => id.type === "IANA Registrar ID")?.identifier ||
-          pubIds.find((id: any) => id.type === "IANA Registrar ID");
+          pubIds.find((id: any) => id.type === "PANDI Registrar ID")?.Identifier
+          || pubIds.find((id: any) => id.type === "PANDI Registrar ID")?.identifier
+          || pubIds.find((id: any) => id.type === "IANA Registrar ID")?.Identifier
+          || pubIds.find((id: any) => id.type === "IANA Registrar ID")?.identifier
+          || pubIds.find((id: any) => id.type === "IANA Registrar ID")
+          ;
 
         if (reg) {
           // console.log(ent.vcardArray);
@@ -148,36 +149,52 @@ export async function whois(
         // handles .ca
         else if (ent.vcardArray?.[1]?.[3]?.[3] === 'registrar') {
           const email =
-          [ent, ...(ent.entities || [])]
-            .filter((e) => e?.vcardArray)
-            .map((e) =>
-              findInObject(
-                e.vcardArray,
-                (el: any) => Array.isArray(el) && el[0] === "email",
-                (el: any[]) => el[3],
-                ""
+            [ent, ...(ent.entities || [])]
+              .filter((e) => e?.vcardArray)
+              .map((e) =>
+                findInObject(
+                  e.vcardArray,
+                  (el: any) => Array.isArray(el) && el[0] === "email",
+                  (el: any[]) => el[3],
+                  ""
+                )
               )
-            )
-            .filter(Boolean)?.[0] || "";
+              .filter(Boolean)?.[0] || "";
 
           registrars.push({ id: 0, name: ent.vcardArray[1][1][3], email, events: ent.events || response.events || ent.enents || response.enents });
         }
         // handles .si
         else if (ent.vcardArray?.[1].find((el: string[]) => el[0] === 'fn')) {
           const email =
-          [ent, ...(ent.entities || [])]
-            .filter((e) => e?.vcardArray)
-            .map((e) =>
-              findInObject(
-                e.vcardArray,
-                (el: any) => Array.isArray(el) && el[0] === "email",
-                (el: any[]) => el[3],
-                ""
+            [ent, ...(ent.entities || [])]
+              .filter((e) => e?.vcardArray)
+              .map((e) =>
+                findInObject(
+                  e.vcardArray,
+                  (el: any) => Array.isArray(el) && el[0] === "email",
+                  (el: any[]) => el[3],
+                  ""
+                )
               )
-            )
-            .filter(Boolean)?.[0] || "";
+              .filter(Boolean)?.[0] || "";
 
-          registrars.push({ id: 0, name: ent.vcardArray[1].find((el: string[]) => el[0] === 'fn')[3], email, events: ent.events || response.events || ent.enents || response.enents });
+          if (ent.handle && ent.handle.toString().match(/^\d+$/)) {
+            const id = ent.handle;
+            const name =
+              (parseInt(id) == id
+                && (await ianaIdToRegistrar(parseInt(id)))?.name)
+              || findInObject(
+                ent.vcardArray,
+                (el: any) =>
+                  Array.isArray(el) && (el[0] === "fn" || el[0] === "org"),
+                (el: any[]) => el[3],
+                id
+              );
+            registrars.push({ id, name, email, events: ent.events || response.events || ent.enents || response.enents });
+          }
+          else {
+            registrars.push({ id: ent.handle || 0, name: ent.vcardArray[1].find((el: string[]) => el[0] === 'fn')[3], email, events: ent.events || response.events || ent.enents || response.enents });
+          }
         }
         // handles .ar
         else if (ent.handle) {
@@ -236,10 +253,10 @@ export async function whois(
   }
 
   if (thickResponse && !thickResponse.errorCode) {
-    await extractRegistrarsAndResellers(thickResponse, thickRdap);
+    await extractRegistrarsAndResellers(thickResponse, thickRdap, true);
   }
   if (thinResponse && !thinResponse.errorCode) {
-    await extractRegistrarsAndResellers(thinResponse, thinRdap);
+    await extractRegistrarsAndResellers(thinResponse, thinRdap, false);
   }
 
   response.found = true;
