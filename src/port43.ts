@@ -79,7 +79,7 @@ export async function port43(actor: string): Promise<WhoisResponse> {
     return response;
   }
 
-  console.log(port43response);
+  // console.log(port43response);
 
   if (
     port43response.match(
