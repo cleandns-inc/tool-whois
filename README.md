@@ -63,3 +63,5 @@ npm install @cleandns/whois
 ## Caveats / limitations
 
 - This package is currently intended for **domain name** lookups only. IPv4/IPv6 address support is not guaranteed.
+
+- Parsing of port 43 WHOIS responses is a work in progress.
