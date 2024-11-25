@@ -1,7 +1,7 @@
 import { ParseResultType, parseDomain } from "parse-domain";
 
 type TldToRdap = [string[], string[]];
-const tldCache = new Map<string, string | null>([]);
+let tldCache = new Map<string, string | null>([]);
 const tldCachePresets: [string, string | null][] = [
   ["it.com", null],
   ["br.com", "https://rdap.centralnic.com/br.com"],
@@ -32,8 +32,9 @@ export async function tldToRdap(
   domain: string
 ): Promise<[string, string | null]> {
   if (tldCache.size === 0) {
+    const tmpCache = new Map<string, string | null>([]);
     for (const [tld, url] of tldCachePresets) {
-      tldCache.set(tld, url);
+      tmpCache.set(tld, url);
     }
 
     // console.warn(`fetching tld-to-rdap`);
@@ -43,9 +44,10 @@ export async function tldToRdap(
 
     for (const [tlds, urls] of response.services) {
       for (const tld of tlds) {
-        tldCache.set(tld, urls[0].replace(/\/$/, ""));
+        tmpCache.set(tld, urls[0].replace(/\/$/, ""));
       }
     }
+    tldCache = tmpCache;
   }
 
   const parsed = parseDomain(domain);
