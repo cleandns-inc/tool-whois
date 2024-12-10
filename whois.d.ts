@@ -21,4 +21,16 @@ export type WhoisResponse = {
     updated: Date | null;
     expires: Date | null;
   };
+  identity?: {
+    handle: string;
+    ipRange: {
+      start: string;
+      endAddress: string;
+    };
+    cidr: string[];
+    name: string;
+    type: string;
+    parent: string | null;
+    ip: string;
+  }
 };

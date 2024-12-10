@@ -73,6 +73,9 @@ export async function tldToRdap(
     //   }
     // }
   }
+  else if (parsed.type === ParseResultType.Ip) {
+    return [domain, "https://rdap.org"];
+  }
 
   return [domain, null];
 }

@@ -1,4 +1,5 @@
 import { WhoisOptions, WhoisResponse, WhoisTimestampFields } from "../whois.js";
+import { parseIpResponse } from "./ip.js";
 import { determinePort43Domain, port43 } from "./port43.js";
 import { findInObject } from "./utils/findInObject.js";
 import { fixArrays } from "./utils/fixArrays.js";
@@ -41,7 +42,9 @@ export async function whois(
     url = "https://rdap.org";
   }
 
-  const thinRdap = `${url}/domain/${domain}`;
+  const type = domain.match(/[^\d.]/) ? "domain" : "ip";
+
+  const thinRdap = `${url}/${type}/${domain}`;
   // console.log(`fetching thin RDAP: ${thinRdap}`);
 
   let thinResponse = await _fetch(thinRdap)
@@ -307,6 +310,8 @@ export async function whois(
     ...(thickResponse?.events || []),
     ...(thinResponse?.events || []),
   ]);
+
+  if (type === 'ip') parseIpResponse(domain, thinResponse, response);
 
   return response;
 }
