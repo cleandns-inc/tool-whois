@@ -60,15 +60,21 @@ export async function port43(actor: string): Promise<WhoisResponse> {
     }
     else {
       response.server = server;
-      const promiseSocket = new PromiseSocket(new Socket());
-      promiseSocket.setTimeout(5 * 1000);
-      await promiseSocket.connect(port, server);
-      await promiseSocket.write(query);
-      port43response = (await promiseSocket.readAll())!
-        .toString()
-        .replace(/\r/g, "")
-        .replace(/^[ \t]+/gm, "");
-      await promiseSocket.end();
+      port43response = await fetch(`https://www.whois.com/whois/${domain}`).then(r => r.text()).then((r) => {
+        return r.match(/<pre class="df-raw" id="registryData">(.*?)<\/pre>/s)?.[1] || "";
+      });
+
+      if (port43response === '') {
+        const promiseSocket = new PromiseSocket(new Socket());
+        promiseSocket.setTimeout(5 * 1000);
+        await promiseSocket.connect(port, server);
+        await promiseSocket.write(query);
+        port43response = (await promiseSocket.readAll())!
+          .toString()
+          .replace(/\r/g, "")
+          .replace(/^[ \t]+/gm, "");
+        await promiseSocket.end();
+      }
     }
   } catch (error: any) {
     console.warn(port, server, query);
