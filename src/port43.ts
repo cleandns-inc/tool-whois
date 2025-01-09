@@ -26,7 +26,7 @@ export function determinePort43Domain(actor: string) {
   return [actor, "", null];
 }
 
-export async function port43(actor: string): Promise<WhoisResponse> {
+export async function port43(actor: string, _fetch: typeof fetch): Promise<WhoisResponse> {
   const [domain, tld, whoisServer] = determinePort43Domain(actor);
   const opts = whoisServer;
   const isWwww = opts?.url;
@@ -55,12 +55,12 @@ export async function port43(actor: string): Promise<WhoisResponse> {
 
   try {
     if (isWwww) {
-      port43response = (await fetch(opts.url.replace('%%domain%%', domain)).then(r => r.text())).toString().replace(/^[ \t]+/gm, "");
+      port43response = (await _fetch(opts.url.replace('%%domain%%', domain)).then(r => r.text())).toString().replace(/^[ \t]+/gm, "");
       response.server = opts.url.match('//(.*?)/')?.[1];
     }
     else {
       response.server = server;
-      port43response = await fetch(`https://www.whois.com/whois/${domain}`).then(r => r.text()).then((r) => {
+      port43response = await _fetch(`https://www.whois.com/whois/${domain}`).then(r => r.text()).then((r) => {
         return r.match(/<pre class="df-raw" id="registryData">(.*?)<\/pre>/s)?.[1] || "";
       });
 
