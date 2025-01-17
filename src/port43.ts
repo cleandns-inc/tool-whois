@@ -135,6 +135,12 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
     )) &&
     (response.reseller = m[1].trim());
 
+    console.log(port43response)
+
+// Updated Date: 2024-11-21T13:42:54Z
+// Creation Date: 2017-12-16T02:11:08Z
+// Registry Expiry Date: 2031-07-10T02:11:08Z
+
   !response.ts.updated &&
     (m = port43response.match(
       /^(?:Last Modified|Updated Date|Last updated on|domain_datelastmodified|last-update|modified|last modified)\.*:[ \t]*(\S.+)/im

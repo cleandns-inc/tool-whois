@@ -6,6 +6,7 @@ import { fixArrays } from "./utils/fixArrays.js";
 import { ianaIdToRegistrar } from "./utils/ianaIdToRegistrar.js";
 import { tldToRdap } from "./utils/tldToRdap.js";
 import { normalizeWhoisStatus } from "./whoisStatus.js";
+import { resolve4 } from "dns/promises";
 
 const eventMap = new Map<string, WhoisTimestampFields>([
   ["registration", "created"],
@@ -34,6 +35,13 @@ export async function whois(
     nameservers: [],
     ts: { created: null, updated: null, expires: null },
   };
+
+  if (url !== null) {
+    const host = new URL(url).host;
+    /* check for A record via DNS lookup */
+    const isLive = await resolve4(host).then((r) => Boolean(r?.length)).catch(() => false);
+    if (! isLive) url = null;
+  }
 
   if (url === null) {
     if (determinePort43Domain(domain)[2]) {
