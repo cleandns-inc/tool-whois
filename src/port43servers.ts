@@ -217,9 +217,10 @@ export const port43servers: Record<string, any> = {
     url: `https://www.domains.lk/wp-content/themes/bridge-child/getDomainData.php?domainname=%%domain%%`,
   },
 
-  "it.com": {
-    url: `https://engine.itcomdomains.com/api/v1/domain/%%domain%%/whois_info`,
-  },
+  "it.com": "whois.it.com",
+  // "it.com": {
+  //   url: `https://engine.itcomdomains.com/api/v1/domain/%%domain%%/whois_info`,
+  // },
 
   com: {
     host: "whois.verisign-grs.com",
