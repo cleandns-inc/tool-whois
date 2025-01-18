@@ -654,6 +654,7 @@ export const port43servers: Record<string, any> = {
   af: "whois.nic.af",
   ag: "whois.nic.ag",
   ai: "whois.nic.ai",
+  "*.ai": "whois.nic.ai",
   al: null,
   am: "whois.amnic.net",
   an: null,
