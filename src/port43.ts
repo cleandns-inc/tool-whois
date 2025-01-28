@@ -135,7 +135,7 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
     )) &&
     (response.reseller = m[1].trim());
 
-    console.log(port43response)
+    // console.log(port43response)
 
 // Updated Date: 2024-11-21T13:42:54Z
 // Creation Date: 2017-12-16T02:11:08Z

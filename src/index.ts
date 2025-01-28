@@ -124,6 +124,8 @@ export async function whois(
           || pubIds.find((id: any) => id.type === "PANDI Registrar ID")?.identifier
           || pubIds.find((id: any) => id.type === "IANA Registrar ID")?.Identifier
           || pubIds.find((id: any) => id.type === "IANA Registrar ID")?.identifier
+          || pubIds.find((id: any) => id.type === "IANA RegistrarID")?.Identifier
+          || pubIds.find((id: any) => id.type === "IANA RegistrarID")?.identifier
           || pubIds.find((id: any) => id.type === "IANA Registrar ID")
           ;
 
