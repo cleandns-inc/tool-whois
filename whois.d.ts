@@ -3,6 +3,7 @@ export type WhoisTimestampFields = "created" | "updated" | "expires";
 export type WhoisOptions = Partial<{
   fetch: typeof fetch;
   thinOnly: boolean;
+  server: string;
 }>;
 
 export type WhoisResponse = {

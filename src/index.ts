@@ -40,7 +40,7 @@ export async function whois(
     const host = new URL(url).host;
     /* check for A record via DNS lookup */
     const isLive = await resolve4(host).then((r) => Boolean(r?.length)).catch(() => false);
-    if (! isLive) url = null;
+    if (!isLive) url = null;
   }
 
   if (url === null) {
@@ -51,15 +51,16 @@ export async function whois(
   }
 
   const type = domain.match(/[^\d.]/) ? "domain" : "ip";
-
+  let thinResponse: any = null;
   const thinRdap = `${url}/${type}/${domain}`;
+
   // console.log(`fetching thin RDAP: ${thinRdap}`);
 
-  let thinResponse = await _fetch(thinRdap)
+  thinResponse = await _fetch(thinRdap)
     .then((r) => r.json() as any)
     .catch(() => null);
   if (thinResponse && !thinResponse.errorCode) {
-  } else {
+  } else if (!options.server) {
     return response;
   }
 
@@ -67,7 +68,8 @@ export async function whois(
     thinResponse = fixArrays(thinResponse);
   }
 
-  const selfRdap = thinResponse.links?.find((link: any) => link.rel === "self");
+  const selfRdap = thinResponse?.links?.find((link: any) => link.rel === "self");
+
   const thickRdap = thinResponse.links
     ?.find(
       (link: any) =>
@@ -75,7 +77,7 @@ export async function whois(
         link.rel === "related" &&
         link.type === "application/rdap+json"
     )
-    ?.href.replace("/domain/domain/", "/domain/");
+    ?.href.replace("/domain/domain/", "/domain/") || `${options.server}/domain/${domain}`;
 
   let thickResponse: any = null;
 
