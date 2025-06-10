@@ -335,7 +335,9 @@ function findStatus(statuses: string | string[], domain: string): string[] {
     ? statuses
     : statuses && typeof statuses === "object"
       ? Object.keys(statuses)
-      : (statuses || "").trim().split(/\s*,\s*/)
+      : typeof statuses === "string"
+        ? statuses.trim().split(/\s*,\s*/)
+        : []
   ).map((status) => normalizeWhoisStatus(status));
 }
 
