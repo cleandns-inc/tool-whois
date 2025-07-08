@@ -85,6 +85,7 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
     return response;
   }
 
+  port43response = port43response.replace(/^[ \t]+/gm, "");
   // console.log(port43response);
 
   if (
