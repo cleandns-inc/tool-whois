@@ -12,7 +12,7 @@ export function determinePort43Domain(actor: string) {
   if (parsed.type === ParseResultType.Listed) {
     let tld = parsed.topLevelDomains.join(".");
     if (port43servers[tld] || port43servers[tld.replace(/^[^.]+\./, "*.")]) {
-      const domain = parsed.domain + "." + tld;
+      const domain = parsed.domain ? (parsed.domain + "." + tld) : tld;
       return [domain, tld, port43servers[tld] || port43servers[tld.replace(/^[^.]+\./, "*.")]];
     }
 
@@ -62,7 +62,7 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
       response.server = server;
       port43response = await _fetch(`https://www.whois.com/whois/${domain}`).then(r => r.text()).then((r) => {
         return r.match(/<pre class="df-raw" id="registryData">(.*?)<\/pre>/s)?.[1] || "";
-      });
+      }).catch((error) => "");
 
       if (port43response === '') {
         const promiseSocket = new PromiseSocket(new Socket());
@@ -77,7 +77,7 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
       }
     }
   } catch (error: any) {
-    console.warn(port, server, query);
+    console.warn({ port, server, query, error: error.message });
     response.found = false;
   }
 
