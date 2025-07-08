@@ -1,6 +1,6 @@
 {
   "name": "@cleandns/whois-rdap",
-  "version": "1.0.46",
+  "version": "1.0.47",
   "description": "",
   "type": "module",
   "main": "dist/index.js",
