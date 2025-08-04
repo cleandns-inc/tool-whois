@@ -28,6 +28,8 @@ export async function whois(
 
   const response: WhoisResponse = {
     found: false,
+    statusCode: 0,
+    error: '',
     registrar: { id: 0, name: null },
     reseller: null,
     status: [],
@@ -44,7 +46,8 @@ export async function whois(
   }
 
   if (url === null) {
-    if (determinePort43Domain(domain)[2]) {
+    let x = null;
+    if (x = determinePort43Domain(domain)[2]) {
       return port43(domain, _fetch);
     }
     url = "https://rdap.org";
@@ -54,11 +57,21 @@ export async function whois(
   let thinResponse: any = null;
   const thinRdap = `${url}/${type}/${domain}`;
 
-  // console.log(`fetching thin RDAP: ${thinRdap}`);
-
   thinResponse = await _fetch(thinRdap)
-    .then((r) => r.json() as any)
-    .catch(() => null);
+    .then((r) => {
+      response.statusCode = r.status;
+      // console.log({ ok: r.ok, status: r.status, statusText: r.statusText });
+      if (r.status >= 200 && r.status < 400) {
+        return r.json() as any;
+      }
+      response.error = r.statusText;
+      return null;
+    })
+    .catch((error: Error) => {
+      console.warn(`thin RDAP lookup failure: ${error.message}`);
+      return null;
+    });
+  
   if (thinResponse && !thinResponse.errorCode) {
   } else if (!options.server) {
     return response;

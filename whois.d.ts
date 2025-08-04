@@ -8,6 +8,8 @@ export type WhoisOptions = Partial<{
 
 export type WhoisResponse = {
   found: boolean;
+  statusCode?: number;
+  error?: string;
   server?: string;
   registrar: {
     id: string | number;

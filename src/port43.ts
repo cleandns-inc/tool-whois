@@ -40,6 +40,8 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
 
   const response: WhoisResponse = {
     found: true,
+    statusCode: 200,
+    error: '',
     registrar: { id: 0, name: null },
     reseller: null,
     status: [],
@@ -48,6 +50,9 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
   };
 
   if (!server) {
+    response.found = false;
+    response.statusCode = 405;
+    response.error = "No server specified for port 43 lookup";
     return response;
   }
 
@@ -79,6 +84,8 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
   } catch (error: any) {
     console.warn({ port, server, query, error: error.message });
     response.found = false;
+    response.statusCode = 500;
+    response.error = error.message || "Unknown error during port 43 lookup";
   }
 
   if (!response.found) {
@@ -88,16 +95,18 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
   port43response = port43response.replace(/^[ \t]+/gm, "");
   // console.log(port43response);
 
+  let m;
+
   if (
-    port43response.match(
-      /^%*\s+(NOT FOUND|No match|NO OBJECT FOUND|No entries found|No Data Found|Domain is available for registration|No information available|Status: free)\b/im
+    m = port43response.match(
+      /^%*\s*(NOT FOUND|No match|NO OBJECT FOUND|No entries found|No Data Found|Domain is available for registration|No information available|Status: free)\b/im
     )
   ) {
     response.found = false;
+    response.statusCode = 404;
+    response.error = m[1].trim();
     return response;
   }
-
-  let m;
 
   const parser = port43parsers[tld] || Object.entries(port43parsers).find(([t]) => tld.endsWith('.' + t))?.[1];
 
