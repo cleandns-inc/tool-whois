@@ -46,8 +46,7 @@ export async function whois(
   }
 
   if (url === null) {
-    let x = null;
-    if (x = determinePort43Domain(domain)[2]) {
+    if (determinePort43Domain(domain)[2]) {
       return port43(domain, _fetch);
     }
     url = "https://rdap.org";
