@@ -191,7 +191,7 @@ export async function whois(
           registrars.push({ id: 0, name: ent.vcardArray[1][1][3], email, events: ent.events || response.events || ent.enents || response.enents });
         }
         // handles .si
-        else if (ent.vcardArray?.[1].find((el: string[]) => el[0] === 'fn')) {
+        else if (ent.vcardArray && ent.vcardArray[1] && ent.vcardArray[1].find((el: string[]) => el[0] === 'fn')) {
           const email =
             [ent, ...(ent.entities || [])]
               .filter((e) => e?.vcardArray)
