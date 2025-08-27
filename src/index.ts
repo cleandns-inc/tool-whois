@@ -63,6 +63,14 @@ export async function whois(
       if (r.status >= 200 && r.status < 400) {
         return r.json() as any;
       }
+
+      // if (response.statusCode === 429) {
+      //   if (determinePort43Domain(domain)[2]) {
+      //     console.warn(`Rate limit exceeded for ${domain} at ${url}, falling back to port 43`);
+      //     return port43(domain, _fetch);
+      //   }
+      // }
+
       response.error = r.statusText;
       return null;
     })
@@ -70,7 +78,7 @@ export async function whois(
       console.warn(`thin RDAP lookup failure: ${error.message}`);
       return null;
     });
-  
+
   if (thinResponse && !thinResponse.errorCode) {
   } else if (!options.server) {
     return response;
