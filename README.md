@@ -6,7 +6,7 @@ WHOIS/RDAP lookups for domain names.
 
 ### `whois(target: string, options?: WhoisParameters): Promise<WhoisResponse>`
 
-Performs an RDAP or port 43 WHOIS lookup for a given domain name, and attempts to normalize the response.
+Performs an RDAP or port 43 WHOIS lookup for a given domain name, and attempts to normalize the response. When RDAP data is incomplete or inaccurate, the library automatically falls back to querying the registrar's WHOIS server directly for more accurate information.
 
 ### Parameters
 
@@ -65,3 +65,5 @@ npm install @cleandns/whois
 - This package is currently intended for **domain name** lookups only. IPv4/IPv6 address support is not guaranteed.
 
 - Parsing of port 43 WHOIS responses is a work in progress.
+
+- Registrar WHOIS fallback uses web-based proxies when direct port 43 access is not available.
