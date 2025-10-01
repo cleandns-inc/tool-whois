@@ -70,7 +70,7 @@ export async function whois(
       console.warn(`thin RDAP lookup failure: ${error.message}`);
       return null;
     });
-  
+
   if (thinResponse && !thinResponse.errorCode) {
   } else if (!options.server) {
     return response;
@@ -140,6 +140,7 @@ export async function whois(
           || pubIds.find((id: any) => id.type === "IANA Registrar ID")?.identifier
           || pubIds.find((id: any) => id.type === "IANA RegistrarID")?.Identifier
           || pubIds.find((id: any) => id.type === "IANA RegistrarID")?.identifier
+          || pubIds.find((id: any) => id.type === "Registry Identifier")?.identifier
           || pubIds.find((id: any) => id.type === "IANA Registrar ID")
           ;
 
@@ -169,9 +170,22 @@ export async function whois(
               )
               .filter(Boolean)?.[0] || "";
 
+          const abuseEmail =
+            [ent, ...(ent.entities || [])]
+              .filter((e) => e?.vcardArray)
+              .map((e) =>
+                findInObject(
+                  e.vcardArray,
+                  (el: any) => Array.isArray(el) && e.roles?.includes("abuse") && el[0] === "email",
+                  (el: any[]) => el[3],
+                  ""
+                )
+              )
+              .filter(Boolean)?.[0] || "";
+
           const events =
             ent.events || response.events || ent.enents || response.enents;
-          registrars.push({ id, name, email, events });
+          registrars.push({ id, name, email, abuseEmail, events });
         }
         // handles .ca
         else if (ent.vcardArray?.[1]?.[3]?.[3] === 'registrar') {
@@ -188,7 +202,20 @@ export async function whois(
               )
               .filter(Boolean)?.[0] || "";
 
-          registrars.push({ id: 0, name: ent.vcardArray[1][1][3], email, events: ent.events || response.events || ent.enents || response.enents });
+          const abuseEmail =
+            [ent, ...(ent.entities || [])]
+              .filter((e) => e?.vcardArray)
+              .map((e) =>
+                findInObject(
+                  e.vcardArray,
+                  (el: any) => Array.isArray(el) && e.roles?.includes("abuse") && el[0] === "email",
+                  (el: any[]) => el[3],
+                  ""
+                )
+              )
+              .filter(Boolean)?.[0] || "";
+
+          registrars.push({ id: 0, name: ent.vcardArray[1][1][3], email, abuseEmail, events: ent.events || response.events || ent.enents || response.enents });
         }
         // handles .si
         else if (ent.vcardArray && ent.vcardArray[1] && ent.vcardArray[1].find((el: string[]) => el[0] === 'fn')) {
@@ -199,6 +226,19 @@ export async function whois(
                 findInObject(
                   e.vcardArray,
                   (el: any) => Array.isArray(el) && el[0] === "email",
+                  (el: any[]) => el[3],
+                  ""
+                )
+              )
+              .filter(Boolean)?.[0] || "";
+
+          const abuseEmail =
+            [ent, ...(ent.entities || [])]
+              .filter((e) => e?.vcardArray)
+              .map((e) =>
+                findInObject(
+                  e.vcardArray,
+                  (el: any) => Array.isArray(el) && e.roles?.includes("abuse") && el[0] === "email",
                   (el: any[]) => el[3],
                   ""
                 )
@@ -217,15 +257,15 @@ export async function whois(
                 (el: any[]) => el[3],
                 id
               );
-            registrars.push({ id, name, email, events: ent.events || response.events || ent.enents || response.enents });
+            registrars.push({ id, name, email, abuseEmail, events: ent.events || response.events || ent.enents || response.enents });
           }
           else {
-            registrars.push({ id: ent.handle || 0, name: ent.vcardArray[1].find((el: string[]) => el[0] === 'fn')[3], email, events: ent.events || response.events || ent.enents || response.enents });
+            registrars.push({ id: ent.handle || 0, name: ent.vcardArray[1].find((el: string[]) => el[0] === 'fn')[3], email, abuseEmail, events: ent.events || response.events || ent.enents || response.enents });
           }
         }
         // handles .ar
         else if (ent.handle) {
-          registrars.push({ id: 0, name: ent.handle, email: '', events: ent.events || response.events || ent.enents || response.enents });
+          registrars.push({ id: 0, name: ent.handle, email: '', abuseEmail: '', events: ent.events || response.events || ent.enents || response.enents });
         }
 
       }
@@ -258,9 +298,22 @@ export async function whois(
             )
             .filter(Boolean)?.[0] || "";
 
+        const abuseEmail =
+          [ent, ...(ent.entities || [])]
+            .filter((e) => e?.vcardArray)
+            .map((e) =>
+              findInObject(
+                e.vcardArray,
+                (el: any) => Array.isArray(el) && e.roles?.includes("abuse") && el[0] === "email",
+                (el: any[]) => el[3],
+                ""
+              )
+            )
+            .filter(Boolean)?.[0] || "";
+
         const events =
           ent.events || response.events || ent.enents || response.enents;
-        registrars.push({ id, name, email, events });
+        registrars.push({ id, name, email, abuseEmail, events });
       }
 
       if (
