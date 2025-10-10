@@ -82,7 +82,7 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
       }
     }
   } catch (error: any) {
-    console.warn({ port, server, query, error: error.message });
+    console.warn({ port, server, query: query.replace(/(?:\/e)?\r?\n$/,''), error: error.message });
     response.found = false;
     response.statusCode = 500;
     response.error = error.message || "Unknown error during port 43 lookup";
@@ -169,7 +169,7 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
     (response.ts.created = new Date(reformatDate(m[1])) || null);
   !response.ts.created &&
     (m = port43response.match(
-      /^(?:Record created on |\[(?:Created on|Registered Date)\][ \t]+)(\S.+)/im
+      /^(?:Record created on |\[(?:Created on|Registered Date)\][ \t]+|Registration Time)(\S.+)/im
     )) &&
     (response.ts.created = new Date(reformatDate(m[1])) || null);
 
@@ -180,7 +180,7 @@ export async function port43(actor: string, _fetch: typeof fetch): Promise<Whois
     (response.ts.expires = new Date(reformatDate(m[1])) || null);
   !response.ts.expires &&
     (m = port43response.match(
-      /^(?:Record expires on |\[Expires on\][ \t]+)(\S.+)/im
+      /^(?:Record expires on |\[Expires on\][ \t]+|Expiration Time)(\S.+)/im
     )) &&
     (response.ts.expires = new Date(reformatDate(m[1])) || null);
 
