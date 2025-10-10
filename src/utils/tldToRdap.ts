@@ -26,6 +26,7 @@ const tldCachePresets: [string, string | null][] = [
   ["uy.com", "https://rdap.centralnic.com/uy.com"],
   ["web.com", "https://rdap.centralnic.com/web.com"],
   ["za.com", "https://rdap.centralnic.com/za.com"],
+  ["ch", "https://rdap.nic.ch"],
 ];
 
 export async function tldToRdap(
@@ -55,7 +56,6 @@ export async function tldToRdap(
   if (parsed.type === ParseResultType.Listed) {
     for (let i = 0; i < parsed.topLevelDomains.length; i++) {
       let tld = parsed.topLevelDomains.slice(i).join('.');
-      console.log(`checking tld: ${tld}`);
       if (tldCache.has(tld)) {
         return [
           [ parsed.domain, parsed.topLevelDomains.join('.') ].join('.'),
@@ -67,7 +67,6 @@ export async function tldToRdap(
     // Check ICANN
     for (let i = 0; i < parsed.icann.topLevelDomains.length; i++) {
       let tld = parsed.icann.topLevelDomains.slice(i).join('.');
-      console.log(`checking tld: ${tld}`);
       if (tldCache.has(tld)) {
         return [
           [ parsed.domain, parsed.icann.topLevelDomains.join('.') ].join('.'),
