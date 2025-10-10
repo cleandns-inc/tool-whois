@@ -6,6 +6,7 @@ import { fixArrays } from "./utils/fixArrays.js";
 import { ianaIdToRegistrar } from "./utils/ianaIdToRegistrar.js";
 import { tldToRdap } from "./utils/tldToRdap.js";
 import { normalizeWhoisStatus } from "./whoisStatus.js";
+import { getRegistrarWhoisServer, extractWhoisServer } from "./utils/registrarServers.js";
 import { resolve4 } from "dns/promises";
 
 const eventMap = new Map<string, WhoisTimestampFields>([
@@ -390,6 +391,9 @@ export async function whois(
 
   if (type === 'ip') parseIpResponse(domain, thinResponse, response);
 
+  // Registrar fallback: If we have incomplete data from RDAP, try registrar WHOIS
+  await attemptRegistrarFallback(domain, response, _fetch, thinResponse, thickResponse);
+
   return response;
 }
 
@@ -447,4 +451,209 @@ function findTimestamps(values: any[]) {
   }
 
   return ts;
+}
+
+/**
+ * Attempt to get better data from registrar WHOIS when RDAP data is incomplete
+ */
+async function attemptRegistrarFallback(
+  domain: string, 
+  response: WhoisResponse, 
+  _fetch: typeof fetch,
+  thinResponse: any,
+  thickResponse: any
+): Promise<void> {
+  // Skip if we already have good data
+  if (response.ts.expires && response.ts.created && response.registrar.name) {
+    return;
+  }
+
+  let registrarWhoisServer: string | null = null;
+
+  // 1. Try to extract WHOIS server from RDAP responses
+  registrarWhoisServer = extractWhoisServer(thickResponse) || extractWhoisServer(thinResponse);
+
+  // 2. If no WHOIS server found, try to get it based on registrar name
+  if (!registrarWhoisServer && response.registrar.name) {
+    registrarWhoisServer = getRegistrarWhoisServer(response.registrar.name);
+  }
+
+  // 3. If still no WHOIS server, check if this is a known problematic case
+  if (!registrarWhoisServer) {
+    // For .in domains, many registrars have their own WHOIS servers
+    const tld = domain.split('.').pop()?.toLowerCase();
+    if (tld === 'in' && response.registrar.name?.toLowerCase().includes('namesilo')) {
+      registrarWhoisServer = 'whois.namesilo.com';
+    } else if (tld === 'us' && response.registrar.name?.toLowerCase().includes('godaddy')) {
+      registrarWhoisServer = 'whois.godaddy.com';
+    }
+  }
+
+  if (!registrarWhoisServer) {
+    return;
+  }
+
+  try {
+    // console.log(`Attempting registrar WHOIS fallback: ${registrarWhoisServer} for ${domain}`);
+    const registrarResponse = await queryRegistrarWhois(domain, registrarWhoisServer, _fetch);
+    
+    if (registrarResponse && registrarResponse.found) {
+      // Merge the better data from registrar WHOIS
+      if (!response.ts.expires && registrarResponse.ts.expires) {
+        response.ts.expires = registrarResponse.ts.expires;
+      }
+      if (!response.ts.created && registrarResponse.ts.created) {
+        response.ts.created = registrarResponse.ts.created;
+      }
+      if (!response.ts.updated && registrarResponse.ts.updated) {
+        response.ts.updated = registrarResponse.ts.updated;
+      }
+      
+      // Prefer registrar data for registrar name if RDAP didn't have it
+      if (!response.registrar.name && registrarResponse.registrar.name) {
+        response.registrar.name = registrarResponse.registrar.name;
+      }
+      if (!response.registrar.id && registrarResponse.registrar.id) {
+        response.registrar.id = registrarResponse.registrar.id;
+      }
+      
+      // Merge status if we have limited status info
+      if (registrarResponse.status.length > response.status.length) {
+        response.status = [...new Set([...response.status, ...registrarResponse.status])];
+      }
+      
+      // Merge nameservers if missing
+      if (registrarResponse.nameservers.length > response.nameservers.length) {
+        response.nameservers = [...new Set([...response.nameservers, ...registrarResponse.nameservers])];
+      }
+      
+      // Add reseller info if missing
+      if (!response.reseller && registrarResponse.reseller) {
+        response.reseller = registrarResponse.reseller;
+      }
+    }
+  } catch (error) {
+    // console.warn(`Registrar WHOIS fallback failed for ${domain}: ${error.message}`);
+    // Silently fail - fallback is best effort
+  }
+}
+
+/**
+ * Query a specific registrar WHOIS server directly
+ */
+async function queryRegistrarWhois(domain: string, server: string, _fetch: typeof fetch): Promise<WhoisResponse | null> {
+  try {
+    // Use whois.com as a proxy to query the registrar WHOIS server
+    const response = await _fetch(`https://www.whois.com/whois/${domain}`)
+      .then(r => r.text())
+      .then(html => {
+        // Extract the raw WHOIS data from the response
+        const match = html.match(/<pre class="df-raw" id="registryData">(.*?)<\/pre>/s);
+        return match ? match[1] : '';
+      });
+
+    if (!response) return null;
+
+    // Parse the WHOIS response manually
+    return parseWhoisResponse(domain, response);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Parse a raw WHOIS response into a structured format
+ */
+function parseWhoisResponse(domain: string, whoisText: string): WhoisResponse {
+  const response: WhoisResponse = {
+    found: true,
+    registrar: { id: 0, name: null },
+    reseller: null,
+    status: [],
+    nameservers: [],
+    ts: { created: null, updated: null, expires: null },
+  };
+
+  if (!whoisText || whoisText.trim() === '') {
+    response.found = false;
+    return response;
+  }
+
+  // Check for "not found" patterns
+  if (whoisText.match(/^%*\s+(NOT FOUND|No match|NO OBJECT FOUND|No entries found|No Data Found|Domain is available for registration|No information available|Status: free)\b/im)) {
+    response.found = false;
+    return response;
+  }
+
+  let match;
+
+  // Extract registrar name
+  if (!response.registrar.name) {
+    match = whoisText.match(/^(?:(?:Sponsoring )?Registrar(?: Name)?|registrar\Wname|registrar|Registration service provider)\.*:[ \t]*(\S.+)/im);
+    if (match) response.registrar.name = match[1].trim();
+  }
+
+  // Extract registrar ID
+  match = whoisText.match(/^Registrar IANA ID:[ \t]*(\d+)/im);
+  if (match) response.registrar.id = parseInt(match[1] || "0");
+
+  // Extract reseller
+  match = whoisText.match(/^(?:Reseller(?: Name)?|reseller_name|reseller):[ \t]*(\S.+)/im);
+  if (match) response.reseller = match[1].trim();
+
+  // Extract dates
+  match = whoisText.match(/^(?:Creation Date|domain_dateregistered|Registered|created|Created date|Domain created)\.*:[ \t]*(\S.+)/im);
+  if (match) response.ts.created = new Date(reformatDate(match[1])) || null;
+
+  match = whoisText.match(/^(?:Last Modified|Updated Date|Last updated on|domain_datelastmodified|last-update|modified|last modified)\.*:[ \t]*(\S.+)/im);
+  if (match) response.ts.updated = new Date(reformatDate(match[1])) || null;
+
+  match = whoisText.match(/^(?:(?:Registry )?Expiry Date|Expiration date|expires?|Exp date|paid-till|free-date|renewal date)\.*:[ \t]*(\S.+)/im);
+  if (match) response.ts.expires = new Date(reformatDate(match[1])) || null;
+
+  // Extract status
+  const statusMatches = whoisText.match(/^(?:Status|Domain [Ss]tatus|status)\.*:.*/gm);
+  if (statusMatches) {
+    statusMatches.forEach((s) => {
+      const statusMatch = s.match(/:[ \t]*([^(\r\n]+)/);
+      if (statusMatch) {
+        const statuses = statusMatch[1].trim().split(/\s*,\s*/);
+        statuses.forEach(status => {
+          if (status.trim()) {
+            response.status.push(normalizeWhoisStatus(status.trim()));
+          }
+        });
+      }
+    });
+  }
+
+  // Extract nameservers
+  const nsMatches = whoisText.match(/^(?:Hostname|DNS|Name Server|ns_name_\d+|name?server|nserver|(?:primary|secondary) server)\.*:.*/gmi);
+  if (nsMatches) {
+    nsMatches.forEach((s) => {
+      const nsMatch = s.match(/:[ \t]*(\S+)/);
+      if (nsMatch && nsMatch[1]) {
+        response.nameservers.push(nsMatch[1].toLowerCase());
+      }
+    });
+  }
+
+  // Deduplicate arrays
+  response.status = [...new Set(response.status)];
+  response.nameservers = [...new Set(response.nameservers)].sort();
+
+  return response;
+}
+
+/**
+ * Reformat various date formats to ISO format
+ */
+function reformatDate(date: string): string {
+  // Handle various date formats commonly found in WHOIS
+  return date
+    .replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")
+    .replace(/(\d{1,2})\/(\d{1,2})\/(\d{4})/, "$3-$1-$2")
+    .replace(/(\d{1,2})-(\w{3})-(\d{4})/, "$3-$2-$1")
+    .replace(/(\d{4})\.(\d{2})\.(\d{2})/, "$1-$2-$3")
+    .trim();
 }
