@@ -267,7 +267,18 @@ export async function whois(
         else if (ent.handle) {
           registrars.push({ id: 0, name: ent.handle, email: '', abuseEmail: '', events: ent.events || response.events || ent.enents || response.enents });
         }
-
+        // catch-all, at least return the Registrar name
+        else if (ent.roles?.includes("registrar")) {
+          const name =
+            findInObject(
+              ent.vcardArray,
+              (el: any) =>
+                Array.isArray(el) && (el[0] === "fn" || el[0] === "org"),
+              (el: any[]) => el[3],
+              reg
+            );
+          registrars.push({ id: 0, name: name, email: '', abuseEmail: '', events: ent.events || response.events || ent.enents || response.enents });
+        }
       }
 
       if (

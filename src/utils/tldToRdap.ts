@@ -53,25 +53,28 @@ export async function tldToRdap(
   const parsed = parseDomain(domain);
 
   if (parsed.type === ParseResultType.Listed) {
-    let tld = parsed.topLevelDomains.join(".");
-    if (tldCache.has(tld)) {
-      return [parsed.domain + "." + tld, tldCache.get(tld)!];
-    }
-    tld = parsed.icann.topLevelDomains.join(".");
-    if (tldCache.has(tld)) {
-      return [parsed.icann.domain + "." + tld, tldCache.get(tld)!];
+    for (let i = 0; i < parsed.topLevelDomains.length; i++) {
+      let tld = parsed.topLevelDomains.slice(i).join('.');
+      console.log(`checking tld: ${tld}`);
+      if (tldCache.has(tld)) {
+        return [
+          [ parsed.domain, parsed.topLevelDomains.join('.') ].join('.'),
+          tldCache.get(tld)!
+        ]
+      }
     }
 
-    // const tlds = [
-    //   parsed.topLevelDomains.join("."),
-    //   // parsed.icann.topLevelDomains.join("."),
-    // ];
-
-    // for (const tld of tlds) {
-    //   if (tldCache.has(tld)) {
-    //     return tldCache.get(tld);
-    //   }
-    // }
+    // Check ICANN
+    for (let i = 0; i < parsed.icann.topLevelDomains.length; i++) {
+      let tld = parsed.icann.topLevelDomains.slice(i).join('.');
+      console.log(`checking tld: ${tld}`);
+      if (tldCache.has(tld)) {
+        return [
+          [ parsed.domain, parsed.icann.topLevelDomains.join('.') ].join('.'),
+          tldCache.get(tld)!
+        ]
+      }
+    }
   }
   else if (parsed.type === ParseResultType.Ip) {
     return [domain, "https://rdap.org"];
