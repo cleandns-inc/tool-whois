@@ -438,12 +438,19 @@ function findTimestamps(values: any[]) {
   }
 
   for (const [event, field] of eventMap) {
-    const date = events.find(
-      (ev: any) => ev?.eventAction?.toLocaleLowerCase() === event
+    events.find(
+      (ev: any) => {
+        const isMatch = ev?.eventAction?.toLocaleLowerCase() === event && ev.eventDate;
+        if (isMatch) {
+          const d = new Date(ev.eventDate.toString().replace(/\+0000Z$/, "Z"));
+          // console.log(field, ev.eventDate, d);
+          if (!isNaN(d.valueOf())) {
+            ts[field] = d;
+            return true;
+          }
+        }
+      }
     );
-    if (date?.eventDate) {
-      ts[field] = new Date(date.eventDate.toString().replace(/\+0000Z$/, "Z"));
-    }
   }
 
   return ts;
