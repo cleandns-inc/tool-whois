@@ -110,14 +110,19 @@ export async function whois(
 
   const selfRdap = thinResponse?.links?.find((link: any) => link.rel === "self");
 
-  const thickRdap = thinResponse.links
+  // Find the thick RDAP URL from the thin response's links
+  const thickRdapFromLinks = thinResponse?.links
     ?.find(
       (link: any) =>
         link.href !== selfRdap?.href &&
         link.rel === "related" &&
         link.type === "application/rdap+json"
     )
-    ?.href.replace("/domain/domain/", "/domain/") || `${options.server}/domain/${domain}`;
+    ?.href.replace("/domain/domain/", "/domain/");
+
+  // Only use options.server as fallback if it's actually defined
+  // This prevents constructing invalid URLs like "undefined/domain/example.com"
+  const thickRdap = thickRdapFromLinks || (options.server ? `${options.server}/domain/${domain}` : null);
 
   let thickResponse: any = null;
 
