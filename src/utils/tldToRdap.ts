@@ -28,17 +28,17 @@ const tldCachePresets: [string, string | null][] = [
   ["za.com", "https://rdap.centralnic.com/za.com"],
 
   // 2026-06-16 click|country|hiv|property|sexy|trust|diy|food|living|lifestyle|vana -> https://rdap.registry.click/rdap
-  ["click", "https://rdap.registry.click"],
-  ["country", "https://rdap.registry.click"],
-  ["hiv", "https://rdap.registry.click"],
-  ["property", "https://rdap.registry.click"],
-  ["sexy", "https://rdap.registry.click"],
-  ["trust", "https://rdap.registry.click"],
-  ["diy", "https://rdap.registry.click"],
-  ["food", "https://rdap.registry.click"],
-  ["living", "https://rdap.registry.click"],
-  ["lifestyle", "https://rdap.registry.click"],
-  ["vana", "https://rdap.registry.click"],
+  ["click", "https://rdap.registry.click/rdap"],
+  ["country", "https://rdap.registry.click/rdap"],
+  ["hiv", "https://rdap.registry.click/rdap"],
+  ["property", "https://rdap.registry.click/rdap"],
+  ["sexy", "https://rdap.registry.click/rdap"],
+  ["trust", "https://rdap.registry.click/rdap"],
+  ["diy", "https://rdap.registry.click/rdap"],
+  ["food", "https://rdap.registry.click/rdap"],
+  ["living", "https://rdap.registry.click/rdap"],
+  ["lifestyle", "https://rdap.registry.click/rdap"],
+  ["vana", "https://rdap.registry.click/rdap"],
 ];
 
 export async function tldToRdap(
