@@ -26,6 +26,19 @@ const tldCachePresets: [string, string | null][] = [
   ["uy.com", "https://rdap.centralnic.com/uy.com"],
   ["web.com", "https://rdap.centralnic.com/web.com"],
   ["za.com", "https://rdap.centralnic.com/za.com"],
+
+  // 2026-06-16 click|country|hiv|property|sexy|trust|diy|food|living|lifestyle|vana -> https://rdap.registry.click/rdap
+  ["click", "https://rdap.registry.click/rdap"],
+  ["country", "https://rdap.registry.click/rdap"],
+  ["hiv", "https://rdap.registry.click/rdap"],
+  ["property", "https://rdap.registry.click/rdap"],
+  ["sexy", "https://rdap.registry.click/rdap"],
+  ["trust", "https://rdap.registry.click/rdap"],
+  ["diy", "https://rdap.registry.click/rdap"],
+  ["food", "https://rdap.registry.click/rdap"],
+  ["living", "https://rdap.registry.click/rdap"],
+  ["lifestyle", "https://rdap.registry.click/rdap"],
+  ["vana", "https://rdap.registry.click/rdap"],
 ];
 
 export async function tldToRdap(
@@ -33,9 +46,6 @@ export async function tldToRdap(
 ): Promise<[string, string | null]> {
   if (tldCache.size === 0) {
     const tmpCache = new Map<string, string | null>([]);
-    for (const [tld, url] of tldCachePresets) {
-      tmpCache.set(tld, url);
-    }
 
     // console.warn(`fetching tld-to-rdap`);
     const response: { services: TldToRdap[] } = await fetch(
@@ -47,6 +57,11 @@ export async function tldToRdap(
         tmpCache.set(tld, urls[0].replace(/\/$/, ""));
       }
     }
+
+    for (const [tld, url] of tldCachePresets) {
+      tmpCache.set(tld, url);
+    }
+
     tldCache = tmpCache;
   }
 
